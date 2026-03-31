@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório NPS - {{ company_name }}</title>
+    <style>
+        :root {
+            --brand-primary: #1a1a2e;
+            --brand-secondary: #16213e;
+            --brand-accent: #0f3460;
+            --green: #2ecc71;
+            --blue: #3498db;
+            --orange: #f39c12;
+            --red: #e74c3c;
+            --gray-light: #f8f9fa;
+            --gray: #6c757d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--gray-light);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 { font-size: 2.2em; margin-bottom: 8px; }
+        .header .subtitle { opacity: 0.85; font-size: 1.1em; }
+        .header .date { opacity: 0.7; margin-top: 10px; font-size: 0.9em; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .section h2 {
+            color: var(--brand-primary);
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--gray-light);
+        }
+
+        .section h3 {
+            color: var(--brand-secondary);
+            font-size: 1.1em;
+            margin: 20px 0 12px;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: var(--gray-light);
+            border-radius: 10px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .kpi-card .value {
+            font-size: 2.5em;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .kpi-card .label {
+            color: var(--gray);
+            font-size: 0.85em;
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-card.highlight {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+            color: white;
+        }
+
+        .kpi-card.highlight .label { color: rgba(255,255,255,0.8); }
+
+        /* NPS Gauge */
+        .nps-gauge {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .nps-score {
+            font-size: 5em;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .nps-zone {
+            display: inline-block;
+            padding: 6px 20px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+
+        /* Distribution Bar */
+        .dist-bar {
+            display: flex;
+            height: 40px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .dist-bar .promoter { background: var(--green); }
+        .dist-bar .passive { background: var(--orange); }
+        .dist-bar .detractor { background: var(--red); }
+
+        .dist-bar > div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+            min-width: 40px;
+        }
+
+        .dist-legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .dist-legend span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9em;
+        }
+
+        .dist-legend .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: var(--gray-light);
+            font-weight: 600;
+            color: var(--brand-primary);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        tr:hover td { background: #fafafa; }
+
+        /* Status badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .badge-promoter { background: #d5f5e3; color: #1e8449; }
+        .badge-passive { background: #fdebd0; color: #b7950b; }
+        .badge-detractor { background: #fadbd8; color: #c0392b; }
+        .badge-up { background: #d5f5e3; color: #1e8449; }
+        .badge-down { background: #fadbd8; color: #c0392b; }
+        .badge-stable { background: #eee; color: #666; }
+
+        .risk-alto { color: var(--red); font-weight: 700; }
+        .risk-medio { color: var(--orange); font-weight: 600; }
+        .risk-baixo { color: var(--green); }
+
+        /* Suggestions */
+        .suggestion {
+            border-left: 4px solid var(--blue);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            background: #f8f9ff;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .suggestion.priority-critica { border-left-color: var(--red); background: #fff5f5; }
+        .suggestion.priority-alta { border-left-color: var(--orange); background: #fffbf0; }
+        .suggestion.priority-media { border-left-color: var(--blue); background: #f0f8ff; }
+        .suggestion.priority-baixa { border-left-color: var(--green); background: #f0fff4; }
+
+        .suggestion .priority-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 8px;
+        }
+
+        .suggestion .priority-tag.critica { background: var(--red); color: white; }
+        .suggestion .priority-tag.alta { background: var(--orange); color: white; }
+        .suggestion .priority-tag.media { background: var(--blue); color: white; }
+        .suggestion .priority-tag.baixa { background: var(--green); color: white; }
+
+        .suggestion h4 { margin: 6px 0; color: var(--brand-primary); }
+        .suggestion p { color: #555; font-size: 0.95em; }
+        .suggestion .category { color: var(--gray); font-size: 0.8em; }
+
+        /* Comments */
+        .comment-card {
+            background: var(--gray-light);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .comment-card .text { font-style: italic; color: #444; margin-bottom: 8px; }
+        .comment-card .meta { font-size: 0.8em; color: var(--gray); }
+
+        /* Charts placeholder */
+        .chart-container {
+            width: 100%;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .chart-container img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        /* Temporal table */
+        .temporal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .temporal-card {
+            background: var(--gray-light);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .temporal-card .period { font-size: 0.8em; color: var(--gray); }
+        .temporal-card .score { font-size: 1.8em; font-weight: 700; }
+        .temporal-card .count { font-size: 0.75em; color: var(--gray); }
+
+        /* Word cloud placeholder */
+        .word-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .word-cloud span {
+            background: var(--gray-light);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.9em;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.85em;
+        }
+
+        /* Print */
+        @media print {
+            body { background: white; }
+            .section { box-shadow: none; border: 1px solid #eee; break-inside: avoid; }
+            .header { background: var(--brand-primary) !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Relatorio NPS</h1>
+    <div class="subtitle">{{ company_name }}</div>
+    <div class="date">Gerado em {{ generated_at }}</div>
+</div>
+
+<div class="container">
+
+    <!-- RESUMO EXECUTIVO -->
+    <div class="section">
+        <h2>Resumo Executivo</h2>
+
+        <div class="nps-gauge">
+            <div class="nps-score" style="color: {{ overall.zone_color }}">{{ overall.score }}</div>
+            <br>
+            <span class="nps-zone" style="background: {{ overall.zone_color }}">
+                Zona de {{ overall.zone }}
+            </span>
+        </div>
+
+        <div class="dist-bar">
+            {% if overall.pct_promoters %}
+            <div class="promoter" style="width: {{ overall.pct_promoters }}%">{{ overall.pct_promoters }}%</div>
+            {% endif %}
+            {% if overall.pct_passives %}
+            <div class="passive" style="width: {{ overall.pct_passives }}%">{{ overall.pct_passives }}%</div>
+            {% endif %}
+            {% if overall.pct_detractors %}
+            <div class="detractor" style="width: {{ overall.pct_detractors }}%">{{ overall.pct_detractors }}%</div>
+            {% endif %}
+        </div>
+
+        <div class="dist-legend">
+            <span><span class="dot" style="background: var(--green)"></span> Promotores: {{ overall.promoters }} ({{ overall.pct_promoters }}%)</span>
+            <span><span class="dot" style="background: var(--orange)"></span> Passivos: {{ overall.passives }} ({{ overall.pct_passives }}%)</span>
+            <span><span class="dot" style="background: var(--red)"></span> Detratores: {{ overall.detractors }} ({{ overall.pct_detractors }}%)</span>
+        </div>
+
+        <div class="kpi-grid" style="margin-top: 30px">
+            <div class="kpi-card highlight">
+                <div class="value">{{ summary.total_responses }}</div>
+                <div class="label">Total de Respostas</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value">{{ summary.total_clients }}</div>
+                <div class="label">Clientes Unicos</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value">{{ summary.active_touchpoints }}</div>
+                <div class="label">Touchpoints Ativos</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value">{{ summary.total_comments }}</div>
+                <div class="label">Comentarios</div>
+            </div>
+            <div class="kpi-card {% if summary.high_risk_clients > 0 %}priority-critica{% endif %}">
+                <div class="value" {% if summary.high_risk_clients > 0 %}style="color: var(--red)"{% endif %}>
+                    {{ summary.high_risk_clients }}
+                </div>
+                <div class="label">Clientes em Risco</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANALISE TEMPORAL -->
+    <div class="section">
+        <h2>Evolucao Temporal do NPS</h2>
+
+        <h3>Mensal</h3>
+        {% if temporal.monthly %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Periodo</th>
+                    <th>NPS</th>
+                    <th>Zona</th>
+                    <th>Respostas</th>
+                    <th>Promotores</th>
+                    <th>Passivos</th>
+                    <th>Detratores</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in temporal.monthly %}
+                <tr>
+                    <td><strong>{{ m.period }}</strong></td>
+                    <td><strong>{{ m.score }}</strong></td>
+                    <td>{{ m.zone }}</td>
+                    <td>{{ m.total }}</td>
+                    <td>{{ m.promoters }}</td>
+                    <td>{{ m.passives }}</td>
+                    <td>{{ m.detractors }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: var(--gray)">Dados temporais insuficientes para analise mensal.</p>
+        {% endif %}
+
+        <h3>Trimestral</h3>
+        {% if temporal.quarterly %}
+        <div class="temporal-grid">
+            {% for q in temporal.quarterly %}
+            <div class="temporal-card">
+                <div class="period">{{ q.period }}</div>
+                <div class="score" style="color: {{ overall.zone_color }}">{{ q.score }}</div>
+                <div class="count">{{ q.total }} respostas</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: var(--gray)">Dados trimestrais insuficientes.</p>
+        {% endif %}
+    </div>
+
+    <!-- ANALISE POR TOUCHPOINT -->
+    <div class="section">
+        <h2>Analise por Touchpoint</h2>
+        {% if by_touchpoint %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Touchpoint</th>
+                    <th>NPS</th>
+                    <th>Zona</th>
+                    <th>Respostas</th>
+                    <th>Promotores</th>
+                    <th>Passivos</th>
+                    <th>Detratores</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tp in by_touchpoint %}
+                <tr>
+                    <td><strong>{{ tp.touchpoint }}</strong></td>
+                    <td><strong>{{ tp.score }}</strong></td>
+                    <td>{{ tp.zone }}</td>
+                    <td>{{ tp.total }}</td>
+                    <td>{{ tp.promoters }}</td>
+                    <td>{{ tp.passives }}</td>
+                    <td>{{ tp.detractors }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: var(--gray)">Nenhum touchpoint com respostas encontrado.</p>
+        {% endif %}
+    </div>
+
+    <!-- ANALISE POR CLIENTE -->
+    <div class="section">
+        <h2>Analise por Cliente</h2>
+        {% if by_client %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>NPS</th>
+                    <th>Respostas</th>
+                    <th>Tendencia</th>
+                    <th>Risco de Churn</th>
+                    <th>Ultima Resposta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in by_client %}
+                <tr>
+                    <td><strong>{{ client.client_name }}</strong></td>
+                    <td><strong>{{ client.score }}</strong></td>
+                    <td>{{ client.total_responses }}</td>
+                    <td>
+                        {% if client.trend == 'up' %}
+                        <span class="badge badge-up">&#9650; Subindo</span>
+                        {% elif client.trend == 'down' %}
+                        <span class="badge badge-down">&#9660; Caindo</span>
+                        {% else %}
+                        <span class="badge badge-stable">&#9654; Estavel</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="risk-{{ client.churn_risk|lower }}">{{ client.churn_risk }}</span>
+                    </td>
+                    <td>{{ client.last_response }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: var(--gray)">Nenhum cliente com respostas encontrado.</p>
+        {% endif %}
+    </div>
+
+    <!-- COMENTARIOS -->
+    <div class="section">
+        <h2>Analise de Comentarios</h2>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="value">{{ comments.total_comments }}</div>
+                <div class="label">Total de Comentarios</div>
+            </div>
+            {% for status_key, status_data in comments.comments_by_status.items() %}
+            <div class="kpi-card">
+                <div class="value">{{ status_data.count }}</div>
+                <div class="label">{{ status_key }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if comments.word_frequency %}
+        <h3>Palavras Mais Frequentes</h3>
+        <div class="word-cloud">
+            {% for word, count in comments.word_frequency.items() %}
+            <span style="font-size: {{ [0.7 + count * 0.15, 2.0] | min }}em; opacity: {{ [0.5 + count * 0.1, 1.0] | min }}">
+                {{ word }} ({{ count }})
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h3>Comentarios Recentes</h3>
+        {% for c in comments.recent_comments[:15] %}
+        <div class="comment-card">
+            <div class="text">"{{ c.comment }}"</div>
+            <div class="meta">
+                <strong>{{ c.person_name }}</strong> |
+                Nota: {{ c.nps_score }} |
+                <span class="badge badge-{{ c.nps_status|lower }}">{{ c.nps_status }}</span> |
+                {{ c.touchpoint_name }} |
+                {{ c.replied_at }}
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if comments.comments_by_status.get('DETRACTOR', {}).get('count', 0) > 0 %}
+        <h3 style="color: var(--red)">Comentarios de Detratores (Atencao!)</h3>
+        {% for c in comments.comments_by_status.DETRACTOR.comments %}
+        <div class="comment-card" style="border-left: 3px solid var(--red)">
+            <div class="text">"{{ c.comment }}"</div>
+            <div class="meta">
+                <strong>{{ c.person_name }}</strong> | Nota: {{ c.nps_score }} | {{ c.touchpoint_name }}
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- SUGESTOES -->
+    <div class="section">
+        <h2>Sugestoes de Melhoria</h2>
+
+        {% for s in suggestions %}
+        <div class="suggestion priority-{{ s.priority|lower }}">
+            <span class="priority-tag {{ s.priority|lower }}">{{ s.priority }}</span>
+            <span class="category">{{ s.category }}</span>
+            <h4>{{ s.title }}</h4>
+            <p>{{ s.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- DISTRIBUICAO DE NOTAS -->
+    <div class="section">
+        <h2>Distribuicao Detalhada de Notas</h2>
+        {% if overall.score_distribution %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Nota</th>
+                    <th>Quantidade</th>
+                    <th>Percentual</th>
+                    <th>Classificacao</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score, count in overall.score_distribution.items() %}
+                <tr>
+                    <td><strong>{{ score }}</strong></td>
+                    <td>{{ count }}</td>
+                    <td>{{ (count / overall.total * 100) | round(1) }}%</td>
+                    <td>
+                        {% if score|int >= 9 %}
+                        <span class="badge badge-promoter">Promotor</span>
+                        {% elif score|int >= 7 %}
+                        <span class="badge badge-passive">Passivo</span>
+                        {% else %}
+                        <span class="badge badge-detractor">Detrator</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>Relatorio gerado automaticamente pelo sistema NPS Branddi</p>
+    <p>Dados coletados via WeHelp | {{ generated_at }}</p>
+</div>
+
+</body>
+</html>

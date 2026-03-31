@@ -1,0 +1,51 @@
+name: NPS Daily Report
+
+on:
+  schedule:
+    # Executa diariamente às 11:00 UTC (08:00 BRT)
+    - cron: '0 11 * * *'
+  workflow_dispatch: # Permite execução manual
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Collect data and generate report
+        env:
+          WEHELP_CLIENT_ID: ${{ secrets.WEHELP_CLIENT_ID }}
+          WEHELP_CLIENT_SECRET: ${{ secrets.WEHELP_CLIENT_SECRET }}
+          WEHELP_SESSION_COOKIE: ${{ secrets.WEHELP_SESSION_COOKIE }}
+          WEHELP_BASE_URL: https://app.wehelpsoftware.com
+        run: python main.py
+
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nps-report-${{ github.run_number }}
+          path: |
+            reports/*.html
+            reports/*.xlsx
+            reports/charts/*.png
+            data/analysis.json
+          retention-days: 90
+
+      - name: Commit data updates
+        run: |
+          git config user.name "NPS Bot"
+          git config user.email "nps-bot@branddi.com"
+          git add data/*.json reports/nps_report_latest.html || true
+          git diff --staged --quiet || git commit -m "chore: atualizar dados NPS $(date +%Y-%m-%d)"
+          git push || true

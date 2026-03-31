@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.wehelpsoftware.com)",
+      "WebFetch(domain:api.wehelpsoftware.com)",
+      "WebFetch(domain:docs.wehelpsoftware.com)",
+      "WebSearch",
+      "WebFetch(domain:app.wehelpsoftware.com)",
+      "WebFetch(domain:wehelpsoftware.com)"
+    ]
+  }
+}
