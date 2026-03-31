@@ -372,6 +372,36 @@ select[multiple] option:checked { background: var(--primary); color: white; }
 </head>
 <body>
 
+<!-- Login Screen -->
+<div id="loginScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#192840 0%,#0e1a2b 100%);display:flex;align-items:center;justify-content:center;z-index:99999;">
+  <div style="background:#fff;border-radius:16px;padding:48px 40px;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;max-width:400px;width:90%;">
+    <div style="width:64px;height:64px;background:linear-gradient(135deg,#0ACFDE,#192840);border-radius:16px;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <h2 style="color:#192840;font-size:22px;margin-bottom:8px;font-family:'Segoe UI',system-ui,sans-serif;">Relatório NPS Branddi</h2>
+    <p style="color:#666;font-size:14px;margin-bottom:28px;font-family:'Segoe UI',system-ui,sans-serif;">Digite a senha para acessar o relatório</p>
+    <input id="loginPassword" type="password" placeholder="Senha" onkeydown="if(event.key==='Enter')checkPassword()" style="width:100%;padding:14px 16px;border:2px solid #e0e0e0;border-radius:10px;font-size:16px;outline:none;transition:border 0.2s;font-family:'Segoe UI',system-ui,sans-serif;" onfocus="this.style.borderColor='#0ACFDE'" onblur="this.style.borderColor='#e0e0e0'">
+    <div id="loginError" style="color:#c62828;font-size:13px;margin-top:10px;display:none;">Senha incorreta</div>
+    <button onclick="checkPassword()" style="width:100%;margin-top:18px;padding:14px;background:linear-gradient(135deg,#0ACFDE,#08a8b5);color:white;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:opacity 0.2s;font-family:'Segoe UI',system-ui,sans-serif;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Acessar</button>
+  </div>
+</div>
+<script>
+function checkPassword(){
+  var p=document.getElementById('loginPassword').value;
+  if(p==='branddinps'){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('mainContent').style.display='block';
+    if(typeof initDashboard==='function')initDashboard();
+  } else {
+    var e=document.getElementById('loginError');
+    e.style.display='block';
+    document.getElementById('loginPassword').style.borderColor='#c62828';
+    setTimeout(function(){e.style.display='none';document.getElementById('loginPassword').style.borderColor='#e0e0e0';},2000);
+  }
+}
+</script>
+
+<div id="mainContent" style="display:none;">
 <div class="header">
   <div>
     <h1>Relatorio NPS Profundo</h1>
@@ -1402,7 +1432,8 @@ function exportCSV() {
 }
 
 // ===================== INIT =====================
-document.addEventListener('DOMContentLoaded', init);
+function initDashboard() { init(); }
 </script>
+</div><!-- /mainContent -->
 </body>
 </html>
