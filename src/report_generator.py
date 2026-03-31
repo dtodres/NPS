@@ -99,12 +99,22 @@ def generate_excel_report(analysis, output_dir="reports"):
                 "detractors", "trend", "churn_risk", "first_response", "last_response",
             ]
             available = [c for c in cols if c in df_clients.columns]
+            # Remove timezone info for Excel compatibility
+            for col in ["first_response", "last_response"]:
+                if col in df_clients.columns:
+                    df_clients[col] = pd.to_datetime(df_clients[col], errors="coerce")
+                    if df_clients[col].dt.tz is not None:
+                        df_clients[col] = df_clients[col].dt.tz_localize(None)
             df_clients[available].to_excel(writer, sheet_name="Por Cliente", index=False)
 
         # Aba: Comentários
         recent = analysis["comments"].get("recent_comments", [])
         if recent:
             df_comments = pd.DataFrame(recent)
+            if "replied_at" in df_comments.columns:
+                df_comments["replied_at"] = pd.to_datetime(df_comments["replied_at"], errors="coerce")
+                if df_comments["replied_at"].dt.tz is not None:
+                    df_comments["replied_at"] = df_comments["replied_at"].dt.tz_localize(None)
             df_comments.to_excel(writer, sheet_name="Comentários", index=False)
 
         # Aba: Sugestões
