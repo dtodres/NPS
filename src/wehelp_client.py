@@ -118,33 +118,51 @@ class WeHelpClient:
         return self._post("responses/find-answered", data)
 
     def get_all_answered_responses(self, filters=None):
-        """Coleta todas as respostas respondidas (com paginação automática)."""
+        """Coleta todas as respostas respondidas (com paginação por cursor).
+
+        A API WeHelp usa cursor-based pagination com o campo 'next'.
+        O endpoint find-answered respeita o filtro de período do dashboard,
+        então para histórico completo, usar o export CSV ou o endpoint find
+        filtrando por status=ANSWERED.
+        """
         all_responses = []
-        page = 1
+        cursor = None
         limit = 100
+        seen_ids = set()
 
         while True:
-            result = self.get_answered_responses(page=page, limit=limit, filters=filters)
-            responses = result if isinstance(result, list) else result.get("data", result.get("items", []))
+            data = {"limit": limit}
+            if cursor:
+                data["next"] = cursor
+            if filters:
+                data.update(filters)
+
+            result = self._post("responses/find-answered", data)
+            responses = result if isinstance(result, list) else result.get("data", [])
 
             if not responses:
                 break
 
-            all_responses.extend(responses)
-            print(f"  Coletadas {len(all_responses)} respostas...")
+            # Deduplica por ID para evitar ciclos de paginação
+            new_responses = []
+            for r in responses:
+                rid = r.get("id", id(r))
+                if rid not in seen_ids:
+                    seen_ids.add(rid)
+                    new_responses.append(r)
 
-            # Verifica se há mais páginas
-            if isinstance(result, dict):
-                total = result.get("total", result.get("count", 0))
-                if total and len(all_responses) >= total:
-                    break
-                if result.get("next") is None and len(responses) < limit:
-                    break
-
-            if len(responses) < limit:
+            if not new_responses:
                 break
 
-            page += 1
+            all_responses.extend(new_responses)
+            print(f"  Coletadas {len(all_responses)} respostas...")
+
+            # Cursor-based pagination
+            if isinstance(result, dict) and result.get("next"):
+                cursor = result["next"]
+            else:
+                break
+
             time.sleep(0.3)  # Rate limiting
 
         return all_responses

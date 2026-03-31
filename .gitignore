@@ -6,8 +6,11 @@ dist/
 build/
 venv/
 .venv/
-reports/*.html
 reports/*.pdf
 reports/*.xlsx
-data/
+reports/charts/
+reports/nps_report_*.html
+data/*
+!data/full_history_responses.json
 .DS_Store
+.claude/
