@@ -1,0 +1,7 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "reports",
+  "rewrites": [
+    { "source": "/", "destination": "/relatorio_profundo_nps.html" }
+  ]
+}
